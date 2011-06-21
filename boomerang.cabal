@@ -1,0 +1,42 @@
+Name:             boomerang
+Version:          1.0
+License:          BSD3
+License-File:     LICENSE
+Author:           jeremy@seereason.com
+Maintainer:       partners@seereason.com
+Bug-Reports:      http://bugzilla.seereason.com/
+Category:         Parsing, Text
+Synopsis:         Library for invertible parsing and printing
+Description:      Specify single unified grammar which can be used for parsing and pretty-printing
+Cabal-Version:    >= 1.6
+Build-type:       Simple
+
+Library
+        Build-Depends:    base >= 4 && < 5,
+                          mtl,
+                          web-routes,
+                          template-haskell
+        Exposed-Modules:  Text.Boomerang
+                          Text.Boomerang.Combinators
+                          Text.Boomerang.Error
+                          Text.Boomerang.HStack
+                          Text.Boomerang.Pos
+                          Text.Boomerang.Prim
+                          Text.Boomerang.Strings
+                          Text.Boomerang.TH
+
+        Extensions:       DeriveDataTypeable,
+                          FlexibleContexts,
+                          FlexibleContexts,
+                          FlexibleInstances,
+                          RankNTypes,
+                          ScopedTypeVariables,
+                          TemplateHaskell,
+                          TypeFamilies,
+                          TypeFamilies,
+                          TypeOperators,
+                          TypeSynonymInstances
+
+source-repository head
+    type:     darcs
+    location: http://src.seereason.com/web-routes/
