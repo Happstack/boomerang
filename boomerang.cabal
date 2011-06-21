@@ -22,6 +22,7 @@ Library
                           Text.Boomerang.HStack
                           Text.Boomerang.Pos
                           Text.Boomerang.Prim
+                          Text.Boomerang.String
                           Text.Boomerang.Strings
                           Text.Boomerang.TH
 

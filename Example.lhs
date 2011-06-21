@@ -1,7 +1,3 @@
-{-|
-
- Module      : Text.Boomerang
-
 Boomerang is a DSL for creating parsers and pretty-printers using a
 single specification. Instead of writing a parser, and then writing a
 separate pretty-printer, both are created at once. This saves time,
@@ -113,21 +109,3 @@ Here is a little app that allows you to interactively test @foo@.
 >        hFlush stdout
 >        l <- getLine
 >        testInvert l
-
-
--}
-module Text.Boomerang
-    ( module Text.Boomerang.Combinators
-    , module Text.Boomerang.Error
-    , module Text.Boomerang.HStack
-    , module Text.Boomerang.Prim
-    , module Text.Boomerang.Pos
-    )
-    where
-
-import Text.Boomerang.Combinators
-import Text.Boomerang.Error
-import Text.Boomerang.HStack
-import Text.Boomerang.Prim
-import Text.Boomerang.Pos
-
