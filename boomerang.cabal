@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.0.0
+Version:          1.0.1
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -7,7 +7,7 @@ Maintainer:       partners@seereason.com
 Bug-Reports:      http://bugzilla.seereason.com/
 Category:         Parsing, Text
 Synopsis:         Library for invertible parsing and printing
-Description:      Specify single unified grammar which can be used for parsing and pretty-printing
+Description:      Specify a single unified grammar which can be used for parsing and pretty-printing
 Cabal-Version:    >= 1.6
 Build-type:       Simple
 
@@ -40,4 +40,5 @@ Library
 
 source-repository head
     type:     darcs
-    location: http://src.seereason.com/web-routes/
+    location: http://patch-tag.com/r/stepcut/boomerang
+
