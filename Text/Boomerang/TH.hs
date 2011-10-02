@@ -4,7 +4,7 @@ module Text.Boomerang.TH (derivePrinterParsers) where
 import Control.Monad       (liftM, replicateM)
 import Language.Haskell.TH 
 import Text.Boomerang.HStack   ((:-)(..), arg)
-import Text.Boomerang.Prim    (xpure)
+import Text.Boomerang.Prim    (xpure, PrinterParser)
 
 -- | Derive routers for all constructors in a datatype. For example: 
 --
@@ -13,16 +13,16 @@ derivePrinterParsers :: Name -> Q [Dec]
 derivePrinterParsers name = do
   info <- reify name
   case info of
-    TyConI (DataD _ _ _ cons _)   ->
-      concat `liftM` mapM derivePrinterParser cons
-    TyConI (NewtypeD _ _ _ con _) ->
-      derivePrinterParser con
+    TyConI (DataD _ tName tBinds cons _)   ->
+      concat `liftM` mapM (derivePrinterParser (tName, tBinds)) cons
+    TyConI (NewtypeD _ tName tBinds con _) ->
+      derivePrinterParser (tName, tBinds) con
     _ ->
       fail $ show name ++ " is not a datatype."
 
 -- Derive a router for a single constructor.
-derivePrinterParser :: Con -> Q [Dec]
-derivePrinterParser con =
+derivePrinterParser :: (Name, [TyVarBndr]) -> Con -> Q [Dec]
+derivePrinterParser (tName, tParams) con =
   case con of
     NormalC name tys -> go name (map snd tys)
     RecC name tys -> go name (map (\(_,_,ty) -> ty) tys)
@@ -30,12 +30,27 @@ derivePrinterParser con =
       runIO $ putStrLn $ "Skipping unsupported constructor " ++ show (conName con)
       return []
   where
+    takeName (PlainTV n) = n
+    takeName (KindedTV n _) = n
     go name tys = do
       let name' = mkPrinterParserName name
+      let tok' = mkName "tok"
+      let e' = mkName "e"
+      let ppType = AppT (AppT (ConT ''PrinterParser) (VarT e')) (VarT tok')
+      let r' = mkName "r"
+      let inT = foldl (\a b -> AppT (AppT (ConT ''(:-)) b) a) (VarT r') tys
+      let outT = AppT (AppT (ConT ''(:-))
+                            (foldl AppT (ConT tName) (map (VarT . takeName) tParams)))
+                      (VarT r')
       runIO $ putStrLn $ "Introducing router " ++ nameBase name' ++ "."
       expr <- [| xpure $(deriveConstructor name (length tys))
                      $(deriveDestructor name tys) |]
-      return [FunD name' [Clause [] (NormalB expr) []]]
+      return [ SigD name'
+                    (ForallT (map PlainTV ([tok', e', r'] ++ (map takeName tParams)))
+                             []
+                             (AppT (AppT ppType inT) outT))
+             , FunD name' [Clause [] (NormalB expr) []]
+             ]
 
 
 -- Derive the contructor part of a router.

@@ -121,24 +121,18 @@ rPair :: PrinterParser e tok (f :- s :- r) ((f, s) :- r)
 rPair = xpure (arg (arg (:-)) (,)) $ \(ab :- t) -> do (a,b) <- Just ab; Just (a :- b :- t)
 
 $(derivePrinterParsers ''Either)
-rLeft  :: PrinterParser e tok (a :- r) (Either a b :- r)
-rRight :: PrinterParser e tok (b :- r) (Either a b :- r)
 
 -- | Combines a router for a value @a@ and a router for a value @b@ into a router for @Either a b@.
 rEither :: PrinterParser e tok r (a :- r) -> PrinterParser e tok r (b :- r) -> PrinterParser e tok r (Either a b :- r)
 rEither l r = rLeft . l <> rRight . r
 
 $(derivePrinterParsers ''Maybe)
-rNothing :: PrinterParser e tok       r  (Maybe a :- r)
-rJust    :: PrinterParser e tok (a :- r) (Maybe a :- r)
 
 -- | Converts a router for a value @a@ to a router for a @Maybe a@.
 rMaybe :: PrinterParser e tok r (a :- r) -> PrinterParser e tok r (Maybe a :- r)
 rMaybe r = rJust . r <> rNothing
 
 $(derivePrinterParsers ''Bool)
-rTrue  :: PrinterParser e tok r (Bool :- r)
-rFalse :: PrinterParser e tok r (Bool :- r)
 
 rBool :: PrinterParser e tok a r -- ^ 'True' parser
       -> PrinterParser e tok a r -- ^ 'False' parser
