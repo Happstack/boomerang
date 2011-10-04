@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.1.0
+Version:          1.1.1
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -14,7 +14,6 @@ Build-type:       Simple
 Library
         Build-Depends:    base >= 4 && < 5,
                           mtl,
-                          web-routes,
                           template-haskell
         Exposed-Modules:  Text.Boomerang
                           Text.Boomerang.Combinators
