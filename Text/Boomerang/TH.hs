@@ -38,7 +38,7 @@ derivePrinterParser (tName, tParams) con =
       let e' = mkName "e"
       let ppType = AppT (AppT (ConT ''PrinterParser) (VarT e')) (VarT tok')
       let r' = mkName "r"
-      let inT = foldl (\a b -> AppT (AppT (ConT ''(:-)) b) a) (VarT r') tys
+      let inT = foldr (\a b -> AppT (AppT (ConT ''(:-)) a) b) (VarT r') tys
       let outT = AppT (AppT (ConT ''(:-))
                             (foldl AppT (ConT tName) (map (VarT . takeName) tParams)))
                       (VarT r')
