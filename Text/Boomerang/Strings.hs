@@ -121,23 +121,46 @@ char :: Char -> PrinterParser StringsError [String] r (Char :- r)
 char c = satisfy (== c) <?> show [c]
 
 -- | matches an 'Int'
+--
+-- Note that the combinator @(rPair . int . int)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
 int :: PrinterParser StringsError [String] r (Int :- r)
 int = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches an 'Integer'
+--
+-- Note that the combinator @(rPair . integer . integer)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
 integer :: PrinterParser StringsError [String] r (Integer :- r)
 integer = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches any 'String'
+--
+-- the parser returns the remainder of the current String segment, (but does not consume the 'end of segment'.
+--
+-- Note that the only combinator that should follow 'anyString' is
+-- 'eos' or '</>'. Other combinators will lead to inconsistent
+-- inversions.
+--
+-- For example, if we have:
+--
+-- > unparseStrings (rPair . anyString . anyString)  ("foo","bar")
+--
+-- That will unparse to @Just ["foobar"]@. But if we call
+--
+-- > parseStrings (rPair . anyString . anyString)  ["foobar"]
+--
+-- We will get @Right ("foobar","")@ instead of the original @Right ("foo","bar")@
 anyString :: PrinterParser StringsError [String] r (String :- r)
 anyString = val ps ss 
     where
       ps = Parser $ \tok pos ->
            case tok of
              []     -> mkParserError pos [EOI "input", Expect "any string"]
-             ("":_) -> mkParserError pos [EOI "segment", Expect "any string"]
-             (s:ss) -> [Right ((s, ss), incMajor 1 pos)]
-      ss str = [\ss -> str : ss]
+--             ("":_) -> mkParserError pos [EOI "segment", Expect "any string"]
+             (s:ss) -> [Right ((s, "":ss), incMinor (length s) pos)]
+      ss str = [\ss -> case ss of
+                         []      -> [str]
+                         (s:ss') -> ((str ++ s) : ss')
+               ]
 
 -- | Predicate to test if we have parsed all the strings.
 -- Typically used as argument to 'parse1'
