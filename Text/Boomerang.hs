@@ -51,8 +51,8 @@ The combinators will be named after the constructors, but with an r prefixed to 
 Now we can define a grammar:
 
 > foo :: StringPrinterParser () (Foo :- ())
-> foo = 
->     (  rBar 
+> foo =
+>     (  rBar
 >     <> rBaz . "baz-" . int . "-" . alpha
 >     )
 
@@ -108,7 +108,7 @@ Here is a little app that allows you to interactively test @foo@.
 >                Nothing  -> putStrLn "unparseString failed to produce a value."
 >                (Just s) -> putStrLn $ "Pretty: " ++ s
 
-> main = forever $ 
+> main = forever $
 >     do putStr "Enter a string to parse: "
 >        hFlush stdout
 >        l <- getLine

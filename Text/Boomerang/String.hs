@@ -9,7 +9,7 @@ module Text.Boomerang.String
     , integer, lit, satisfy, space
     -- * Running the 'PrinterParser'
     , isComplete, parseString, unparseString
-    ) 
+    )
     where
 
 import Prelude                 hiding ((.), id, (/))
@@ -30,10 +30,9 @@ type StringPrinterParser = PrinterParser StringError String
 instance InitialPosition StringError where
     initialPos _ = MajorMinorPos 0 0
 
-
 -- | a constant string
 lit :: String -> StringPrinterParser r r
-lit l = PrinterParser pf sf 
+lit l = PrinterParser pf sf
     where
       pf = Parser $ \tok pos ->
            case tok of
@@ -54,13 +53,13 @@ instance a ~ b => IsString (PrinterParser StringError String a b) where
 -- | statisfy a 'Char' predicate
 satisfy :: (Char -> Bool) -> StringPrinterParser r (Char :- r)
 satisfy p = val
-  (Parser $ \tok pos -> 
+  (Parser $ \tok pos ->
        case tok of
          []          -> mkParserError pos [EOI "input"]
          (c:cs)
-             | p c -> 
+             | p c ->
                  do [Right ((c, cs), if (c == '\n') then incMajor 1 pos else incMinor 1 pos)]
-             | otherwise -> 
+             | otherwise ->
                  do mkParserError pos [SysUnExpect $ show c]
   )
   (\c -> [ \paths -> (c:paths) | p c ])
@@ -69,7 +68,7 @@ satisfy p = val
 digit :: StringPrinterParser r (Char :- r)
 digit = satisfy isDigit <?> "a digit 0-9"
 
--- | matches alphabetic Unicode characters (lower-case, upper-case and title-case letters, 
+-- | matches alphabetic Unicode characters (lower-case, upper-case and title-case letters,
 -- plus letters of caseless scripts and modifiers letters).  (Uses 'isAlpha')
 alpha :: StringPrinterParser r (Char :- r)
 alpha = satisfy isAlpha <?> "an alphabetic Unicode character"
@@ -86,13 +85,20 @@ anyChar = satisfy (const True)
 char :: Char -> StringPrinterParser r (Char :- r)
 char c = satisfy (== c) <?> show [c]
 
+readIntegral :: (Read a, Eq a, Num a) => String -> a
+readIntegral s =
+    case reads s of
+      [(x, [])] -> x
+      []  -> error "readIntegral: no parse"
+      _   -> error "readIntegral: ambiguous parse"
+
 -- | matches an 'Int'
 int :: StringPrinterParser r (Int :- r)
-int = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
+int = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches an 'Integer'
 integer :: StringPrinterParser r (Integer :- r)
-integer = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
+integer = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | Predicate to test if we have parsed all the strings.
 -- Typically used as argument to 'parse1'
@@ -109,7 +115,7 @@ isComplete = null
 parseString :: StringPrinterParser () (r :- ())
              -> String
              -> Either StringError r
-parseString pp strs = 
+parseString pp strs =
     either (Left . condenseErrors) Right $ parse1 isComplete pp strs
 
 -- | run the printer

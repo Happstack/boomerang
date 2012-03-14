@@ -4,11 +4,11 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Web.Boomerang.Regular 
+module Web.Boomerang.Regular
   ( mkPrinterParsers
   , PrinterParsers
   , PrinterParserList(..)
-  
+
   -- * Re-exported from Generics.Regular
   , deriveAll
   , PF
@@ -39,16 +39,16 @@ instance MkPrinterParser f => MkPrinterParsers (C c f) where
 
 data instance PrinterParserList e tok (f :+: g) r = PrinterParserList e tok f r :& PrinterParserList e tok g r
 instance (MkPrinterParsers f, MkPrinterParsers g) => MkPrinterParsers (f :+: g) where
-  mkPrinterParsers' addLR matchLR = mkPrinterParsers' (addLR . L) (matchL matchLR) 
+  mkPrinterParsers' addLR matchLR = mkPrinterParsers' (addLR . L) (matchL matchLR)
                           :& mkPrinterParsers' (addLR . R) (matchR matchLR)
     where
       matchL :: (r ->  Maybe ((f :+: g) r)) -> r -> Maybe (f r)
-      matchL frm r = case frm r of 
+      matchL frm r = case frm r of
         Just (L f) -> Just f
         _ -> Nothing
 
       matchR :: (r -> Maybe ((f :+: g) r)) -> r -> Maybe (g r)
-      matchR frm r = case frm r of 
+      matchR frm r = case frm r of
         Just (R f) -> Just f
         _ -> Nothing
 
@@ -76,7 +76,7 @@ instance MkPrinterParser I where
 type instance PrinterParserLhs (f :*: g) r t = PrinterParserLhs f r (PrinterParserLhs g r t)
 instance (MkPrinterParser f, MkPrinterParser g) => MkPrinterParser (f :*: g) where
   mkP t = (f :*: g) :- t''
-    where 
+    where
       f :- t'  = mkP t
       g :- t'' = mkP t'
   mkS ((f :*: g) :- t) = mkS (f :- mkS (g :- t))

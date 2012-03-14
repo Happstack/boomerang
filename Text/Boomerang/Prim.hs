@@ -36,25 +36,26 @@ compose op mf mg s = do
 -- The list must be finite and non-empty.
 maximumsBy               :: (a -> a -> Ordering) -> [a] -> [a]
 maximumsBy _ []          =  error "Text.Boomerang.Core.maximumsBy: empty list"
-maximumsBy cmp (x:xs)        =  foldl maxBy [x] xs
-                        where
-                           maxBy xs@(x:_) y = case cmp x y of
-                                       GT -> xs
-                                       EQ -> (y:xs)
-                                       LT  -> [y]
+maximumsBy cmp (x:xs)    =  foldl maxBy [x] xs
+    where
+      maxBy xs@(x:_) y =
+          case cmp x y of
+            GT -> xs
+            EQ -> (y:xs)
+            LT  -> [y]
 
--- |Yet another parser. 
+-- |Yet another parser.
 --
 -- Returns all possible parses and parse errors
 newtype Parser e tok a = Parser { runParser :: tok -> Pos e -> [Either e ((a, tok), Pos e)] }
 
 instance Functor (Parser e tok) where
-    fmap f (Parser p) = 
+    fmap f (Parser p) =
         Parser $ \tok pos ->
             map (fmap (first (first f))) (p tok pos)
 
 instance Monad (Parser e tok) where
-    return a = 
+    return a =
         Parser $ \tok pos ->
             [Right ((a, tok), pos)]
     (Parser p) >>= f =
@@ -75,13 +76,13 @@ composeP
   -> Parser e tok a
   -> Parser e tok b
   -> Parser e tok c
-composeP op mf mg = 
+composeP op mf mg =
     do f <- mf
        g <- mg
        return (f `op` g)
 
 -- | Attempt to extract the most relevant errors from a list of parse errors.
--- 
+--
 -- The current heuristic is to find error (or errors) where the error position is highest.
 bestErrors :: (ErrorPosition e, Ord (Pos e)) => [e] -> [e]
 bestErrors [] = []
@@ -99,23 +100,23 @@ instance Category (PrinterParser e tok) where
     (return id)
     (\x -> [(id, x)])
 
-  ~(PrinterParser pf sf) . ~(PrinterParser pg sg) = PrinterParser 
+  ~(PrinterParser pf sf) . ~(PrinterParser pg sg) = PrinterParser
     (composeP (.) pf pg)
-    (compose (.) sf sg) 
+    (compose (.) sf sg)
 
 instance Monoid (PrinterParser e tok a b) where
-  mempty = PrinterParser 
+  mempty = PrinterParser
     mzero
     (const mzero)
 
-  ~(PrinterParser pf sf) `mappend` ~(PrinterParser pg sg) = PrinterParser 
+  ~(PrinterParser pf sf) `mappend` ~(PrinterParser pg sg) = PrinterParser
     (pf `mplus` pg)
     (\s -> sf s `mplus` sg s)
 
 infixr 9 .~
 -- | Reverse composition, but with the side effects still in left-to-right order.
 (.~) :: PrinterParser e tok a b -> PrinterParser e tok b c -> PrinterParser e tok a c
-~(PrinterParser pf sf) .~ ~(PrinterParser pg sg) = PrinterParser 
+~(PrinterParser pf sf) .~ ~(PrinterParser pg sg) = PrinterParser
   (composeP (flip (.)) pf pg)
   (compose (flip (.)) sg sf)
 
@@ -144,14 +145,14 @@ val rs ss = PrinterParser rs' ss'
 
 -- | Give all possible parses or errors.
 parse :: forall e a p tok. (InitialPosition e) => PrinterParser e tok () a -> tok -> [Either e (a, tok)]
-parse p s = 
+parse p s =
     map (either Left (\((f, tok), _) -> Right (f (), tok))) $ runParser (prs p) s (initialPos (Nothing :: Maybe e))
 
--- | Give the first parse, for PrinterParsers with a parser that yields just one value. 
+-- | Give the first parse, for PrinterParsers with a parser that yields just one value.
 -- Otherwise return the error (or errors) with the highest error position.
 parse1 :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
           (tok -> Bool) -> PrinterParser e tok () (a :- ()) -> tok -> Either [e] a
-parse1 isComplete r paths = 
+parse1 isComplete r paths =
     let results = parse r paths
     in case [ a | (Right (a,tok)) <- results, isComplete tok ] of
          ((u :- ()):_) -> Right u
@@ -163,7 +164,7 @@ unparse tok p = (map (($ tok) . fst)) . ser p
 
 -- | Give the first serialization, for PrinterParsers with a serializer that needs just one value.
 unparse1 :: tok -> PrinterParser e tok () (a :- ()) -> a -> Maybe tok
-unparse1 tok p a = 
+unparse1 tok p a =
     case unparse tok p (a :- ()) of
       [] -> Nothing
       (s:_) -> Just s

@@ -43,7 +43,7 @@ instance Error (ParserError p) where
     strMsg s = ParserError Nothing [Message s]
 
 -- | lift a 'pos' and '[ErrorMsg]' into a parse error
--- 
+--
 -- This is intended to be used inside a 'Parser' like this:
 --
 -- > Parser $ \tok pos -> mkParserError pos [Message "just some error..."]
@@ -56,13 +56,13 @@ infix  0 <?>
 --
 -- > satisfy isUpper <?> 'an uppercase character'
 (<?>) :: PrinterParser (ParserError p) tok a b -> String -> PrinterParser (ParserError p) tok a b
-router <?> msg = 
+router <?> msg =
     router { prs = Parser $ \tok pos ->
         map (either (\(ParserError mPos errs) -> Left $ ParserError mPos ((Expect msg) : errs)) Right) (runParser (prs router) tok pos) }
 
 -- | condense the 'ParserError's with the highest parse position into a single 'ParserError'
 condenseErrors :: (Ord pos) => [ParserError pos] -> ParserError pos
-condenseErrors errs = 
+condenseErrors errs =
     case bestErrors errs of
       [] -> ParserError Nothing []
       errs'@(ParserError pos _ : _) ->
@@ -92,11 +92,11 @@ showErrorMessages msgOr msgUnknown msgExpecting msgUnExpected msgEndOfInput msgs
 
       showExpect      = showMany msgExpecting expect
       showUnExpect    = showMany msgUnExpected unExpect
-      showSysUnExpect 
+      showSysUnExpect
           | null sysUnExpect = ""
-          | otherwise        = 
+          | otherwise        =
               let msg = head sysUnExpect
-              in msgUnExpected ++ " " ++ 
+              in msgUnExpected ++ " " ++
                      if (isEOI msg) then msgEndOfInput ++ " " ++ (messageString $ head sysUnExpect)
                                     else messageString $ head sysUnExpect
       showMessages      = showMany "" msgs3

@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 module Text.Boomerang.HStack
     ( (:-)(..)
-    , arg, hdTraverse, hdMap, hhead, htail, pop 
+    , arg, hdTraverse, hdMap, hhead, htail, pop
     ) where
 
 infixr 8 :-

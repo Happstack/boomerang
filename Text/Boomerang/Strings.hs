@@ -6,10 +6,10 @@ module Text.Boomerang.Strings
       StringsError
     -- * Combinators
     , (</>), alpha, anyChar, anyString, char, digit, eos, int
-    , integer, lit, satisfy, satisfyStr, space
+    , integer, lit, readshow, satisfy, satisfyStr, space
     -- * Running the 'PrinterParser'
     , isComplete, parseStrings, unparseStrings
-    
+
     )
     where
 
@@ -35,7 +35,7 @@ instance a ~ b => IsString (PrinterParser StringsError [String] a b) where
 
 -- | a constant string
 lit :: String -> PrinterParser StringsError [String] r r
-lit l = PrinterParser pf sf 
+lit l = PrinterParser pf sf
     where
       pf = Parser $ \tok pos ->
            case tok of
@@ -43,9 +43,9 @@ lit l = PrinterParser pf sf
              ("":_) | (not $ null l) -> mkParserError pos [EOI "segment", Expect (show l)]
              (p:ps) ->
                  case stripPrefix l p of
-                   (Just p') -> 
+                   (Just p') ->
                        do [Right ((id, p':ps), incMinor (length l) pos)]
-                   Nothing -> 
+                   Nothing ->
                        mkParserError pos [UnExpect (show p), Expect (show l)]
       sf b = [ (\strings -> case strings of [] -> [l] ; (s:ss) -> ((l ++ s) : ss), b)]
 
@@ -56,11 +56,11 @@ f </> g = f . eos . g
 
 -- | end of string
 eos :: PrinterParser StringsError [String] r r
-eos = PrinterParser 
+eos = PrinterParser
        (Parser $ \path pos -> case path of
                    []      -> [Right ((id, []), incMajor 1 pos)]
 --                   [] -> mkParserError pos [EOI "input"]
-                   ("":ps) -> 
+                   ("":ps) ->
                           [ Right ((id, ps), incMajor 1 pos) ]
                    (p:_) -> mkParserError pos [Message $ "path-segment not entirely consumed: " ++ p])
        (\a -> [(("" :), a)])
@@ -68,32 +68,32 @@ eos = PrinterParser
 -- | statisfy a 'Char' predicate
 satisfy :: (Char -> Bool) -> PrinterParser StringsError [String] r (Char :- r)
 satisfy p = val
-  (Parser $ \tok pos -> 
+  (Parser $ \tok pos ->
        case tok of
          []          -> mkParserError pos [EOI "input"]
          ("":ss)     -> mkParserError pos [EOI "segment"]
          ((c:cs):ss)
-             | p c -> 
+             | p c ->
                  do [Right ((c, cs : ss), incMinor 1 pos )]
-             | otherwise -> 
+             | otherwise ->
                  do mkParserError pos [SysUnExpect $ show c]
   )
   (\c -> [ \paths -> case paths of [] -> [[c]] ; (s:ss) -> ((c:s):ss) | p c ])
 
 
--- | satisfy a 'String' predicate. 
+-- | satisfy a 'String' predicate.
 --
 -- Note: must match the entire remainder of the 'String' in this segment
 satisfyStr :: (String -> Bool) -> PrinterParser StringsError [String] r (String :- r)
 satisfyStr p = val
-  (Parser $ \tok pos -> 
+  (Parser $ \tok pos ->
        case tok of
          []          -> mkParserError pos [EOI "input"]
          ("":ss)     -> mkParserError pos [EOI "segment"]
          (s:ss)
-             | p s -> 
+             | p s ->
                  do [Right ((s, "":ss), incMajor 1 pos )]
-             | otherwise -> 
+             | otherwise ->
                  do mkParserError pos [SysUnExpect $ show s]
   )
   (\str -> [ \strings -> case strings of [] -> [str] ; (s:ss) -> ((str++s):ss) | p str ])
@@ -103,7 +103,7 @@ satisfyStr p = val
 digit :: PrinterParser StringsError [String] r (Char :- r)
 digit = satisfy isDigit <?> "a digit 0-9"
 
--- | matches alphabetic Unicode characters (lower-case, upper-case and title-case letters, 
+-- | matches alphabetic Unicode characters (lower-case, upper-case and title-case letters,
 -- plus letters of caseless scripts and modifiers letters).  (Uses 'isAlpha')
 alpha :: PrinterParser StringsError [String] r (Char :- r)
 alpha = satisfy isAlpha <?> "an alphabetic Unicode character"
@@ -120,17 +120,53 @@ anyChar = satisfy (const True)
 char :: Char -> PrinterParser StringsError [String] r (Char :- r)
 char c = satisfy (== c) <?> show [c]
 
+-- | lift 'Read'/'Show' to a 'PrinterParser'
+--
+-- There are a few restrictions here:
+--
+--  1. Error messages are a bit fuzzy. `Read` does not tell us where
+--  or why a parse failed. So all we can do it use the the position
+--  that we were at when we called read and say that it failed.
+--
+--  2. it is (currently) not safe to use 'readshow' on integral values
+--  because the 'Read' instance for 'Int', 'Integer', etc,
+readshow :: (Read a, Show a) => PrinterParser StringsError [String] r (a :- r)
+readshow =
+    val readParser s
+    where
+      s a = [ \strings -> case strings of [] -> [show a] ; (s:ss) -> (((show a)++s):ss) ]
+
+readParser :: (Read a) => Parser StringsError [String] a
+readParser =
+    Parser $ \tok pos ->
+        case tok of
+          []     -> mkParserError pos [EOI "input"]
+          ("":_) -> mkParserError pos [EOI "segment"]
+          (p:ps) ->
+            case reads p of
+              [] -> mkParserError pos [SysUnExpect p, Message $ "decoding using 'read' failed."]
+              [(a,r)] ->
+                  [Right ((a, r:ps), incMinor ((length p) - (length r)) pos)]
+
+readIntegral :: (Read a, Eq a, Num a) => String -> a
+readIntegral s =
+    case reads s of
+      [(x, [])] -> x
+      []  -> error "readIntegral: no parse"
+      _   -> error "readIntegral: ambiguous parse"
+
+
 -- | matches an 'Int'
 --
 -- Note that the combinator @(rPair . int . int)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
 int :: PrinterParser StringsError [String] r (Int :- r)
-int = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
+int = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches an 'Integer'
 --
 -- Note that the combinator @(rPair . integer . integer)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
 integer :: PrinterParser StringsError [String] r (Integer :- r)
-integer = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
+integer = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches any 'String'
 --
@@ -150,7 +186,7 @@ integer = xmaph read (Just . show) (opt (rCons . char '-') . (rList1 digit))
 --
 -- We will get @Right ("foobar","")@ instead of the original @Right ("foo","bar")@
 anyString :: PrinterParser StringsError [String] r (String :- r)
-anyString = val ps ss 
+anyString = val ps ss
     where
       ps = Parser $ \tok pos ->
            case tok of
@@ -179,7 +215,7 @@ isComplete _    = False
 parseStrings :: PrinterParser StringsError [String] () (r :- ())
              -> [String]
              -> Either StringsError r
-parseStrings pp strs = 
+parseStrings pp strs =
     either (Left . condenseErrors) Right $ parse1 isComplete pp strs
 
 -- | run the printer

@@ -2,11 +2,11 @@
 module Text.Boomerang.TH (derivePrinterParsers) where
 
 import Control.Monad       (liftM, replicateM)
-import Language.Haskell.TH 
+import Language.Haskell.TH
 import Text.Boomerang.HStack   ((:-)(..), arg)
 import Text.Boomerang.Prim    (xpure, PrinterParser)
 
--- | Derive routers for all constructors in a datatype. For example: 
+-- | Derive routers for all constructors in a datatype. For example:
 --
 --   @$(derivePrinterParsers \'\'Sitemap)@
 derivePrinterParsers :: Name -> Q [Dec]

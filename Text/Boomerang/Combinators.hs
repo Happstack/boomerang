@@ -1,6 +1,6 @@
 -- | a collection of generic parsing combinators that can work with any token and error type.
 {-# LANGUAGE TemplateHaskell, TypeOperators #-}
-module Text.Boomerang.Combinators 
+module Text.Boomerang.Combinators
     ( (<>), duck, duck1, opt
     , manyr, somer, chainr, chainr1, manyl, somel, chainl, chainl1
     , rFilter, printAs, push, rNil, rCons, rList, rList1, rListSep, rPair
@@ -49,12 +49,12 @@ manyr = opt . somer
 somer :: PrinterParser e tok r r -> PrinterParser e tok r r
 somer p = p . manyr p
 
--- | @chainr p op@ repeats @p@ zero or more times, separated by @op@. 
+-- | @chainr p op@ repeats @p@ zero or more times, separated by @op@.
 --   The result is a right associative fold of the results of @p@ with the results of @op@.
 chainr :: PrinterParser e tok r r -> PrinterParser e tok r r -> PrinterParser e tok r r
 chainr p op = opt (manyr (p .~ op) . p)
 
--- | @chainr1 p op@ repeats @p@ one or more times, separated by @op@. 
+-- | @chainr1 p op@ repeats @p@ one or more times, separated by @op@.
 --   The result is a right associative fold of the results of @p@ with the results of @op@.
 chainr1 :: PrinterParser e tok r (a :- r) -> PrinterParser e tok (a :- a :- r) (a :- r) -> PrinterParser e tok r (a :- r)
 chainr1 p op = manyr (duck p .~ op) . p
@@ -67,30 +67,30 @@ manyl = opt . somel
 somel :: PrinterParser e tok r r -> PrinterParser e tok r r
 somel p = p .~ manyl p
 
--- | @chainl1 p op@ repeats @p@ zero or more times, separated by @op@. 
+-- | @chainl1 p op@ repeats @p@ zero or more times, separated by @op@.
 --   The result is a left associative fold of the results of @p@ with the results of @op@.
 chainl :: PrinterParser e tok r r -> PrinterParser e tok r r -> PrinterParser e tok r r
 chainl p op = opt (p .~ manyl (op . p))
 
--- | @chainl1 p op@ repeats @p@ one or more times, separated by @op@. 
+-- | @chainl1 p op@ repeats @p@ one or more times, separated by @op@.
 --   The result is a left associative fold of the results of @p@ with the results of @op@.
 chainl1 :: PrinterParser e tok r (a :- r) -> PrinterParser e tok (a :- a :- r) (a :- r) -> PrinterParser e tok r (a :- r)
 chainl1 p op = p .~ manyl (op . duck p)
 
 -- | Filtering on routers.
--- 
+--
 -- TODO: We remove any parse errors, not sure if the should be preserved. Also, if the predicate fails we silently remove the element, but perhaps we should replace the value with an error message?
-rFilter :: (a -> Bool) -> PrinterParser e tok () (a :- ()) -> PrinterParser e tok r (a :- r) 
+rFilter :: (a -> Bool) -> PrinterParser e tok () (a :- ()) -> PrinterParser e tok r (a :- r)
 rFilter p r = val ps ss
     where
-      ps = Parser $ \tok pos -> 
+      ps = Parser $ \tok pos ->
            let parses = runParser (prs r) tok pos
            in [ Right ((a, tok), pos) | (Right ((f, tok), pos)) <- parses, let a = hhead (f ()), p a]
       ss = \a -> [ f | p a, (f, _) <- ser r (a :- ()) ]
 
 -- | @r \`printAs\` s@ uses ther serializer of @r@ to test if serializing succeeds,
---   and if it does, instead serializes as @s@. 
--- 
+--   and if it does, instead serializes as @s@.
+--
 -- TODO: can this be more general so that it can work on @tok@ instead of @[tok]@
 printAs :: PrinterParser e [tok] a b -> tok -> PrinterParser e [tok] a b
 printAs r s = r { ser = map (first (const (s :))) . take 1 . ser r }
