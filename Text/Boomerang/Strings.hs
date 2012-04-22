@@ -19,6 +19,7 @@ import Data.Char               (isAlpha, isDigit, isSpace)
 import Data.Data               (Data, Typeable)
 import Data.List               (stripPrefix)
 import Data.String             (IsString(..))
+import Numeric                    (readDec, readSigned)
 import Text.Boomerang.Combinators (opt, rCons, rList1)
 import Text.Boomerang.Error       (ParserError(..),ErrorMsg(..), (<?>), condenseErrors, mkParserError)
 import Text.Boomerang.HStack       ((:-)(..))
@@ -148,13 +149,12 @@ readParser =
               [(a,r)] ->
                   [Right ((a, r:ps), incMinor ((length p) - (length r)) pos)]
 
-readIntegral :: (Read a, Eq a, Num a) => String -> a
+readIntegral :: (Read a, Eq a, Num a, Real a) => String -> a
 readIntegral s =
-    case reads s of
+    case (readSigned readDec) s of
       [(x, [])] -> x
       []  -> error "readIntegral: no parse"
       _   -> error "readIntegral: ambiguous parse"
-
 
 -- | matches an 'Int'
 --

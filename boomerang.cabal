@@ -12,9 +12,10 @@ Cabal-Version:    >= 1.6
 Build-type:       Simple
 
 Library
-        Build-Depends:    base >= 4 && < 5,
-                          mtl,
-                          template-haskell
+        Build-Depends:    base             >= 4 && < 5,
+                          mtl              >= 2.0 && <2.2,
+                          template-haskell,
+                          text             == 0.11.*
         Exposed-Modules:  Text.Boomerang
                           Text.Boomerang.Combinators
                           Text.Boomerang.Error
@@ -23,6 +24,7 @@ Library
                           Text.Boomerang.Prim
                           Text.Boomerang.String
                           Text.Boomerang.Strings
+                          Text.Boomerang.Texts
                           Text.Boomerang.TH
 
         Extensions:       DeriveDataTypeable,
