@@ -150,13 +150,21 @@ parse p s =
 
 -- | Give the first parse, for PrinterParsers with a parser that yields just one value.
 -- Otherwise return the error (or errors) with the highest error position.
-parse1 :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
+parse1' :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
           (tok -> Bool) -> PrinterParser e tok () (a :- ()) -> tok -> Either [e] a
-parse1 isComplete r paths =
+parse1' isComplete r paths =
     let results = parse r paths
     in case [ a | (Right (a,tok)) <- results, isComplete tok ] of
          ((u :- ()):_) -> Right u
          _             -> Left $ bestErrors [ e | Left e <- results ]
+
+-- | Give the first parse, for PrinterParsers with a parser that yields just one value.
+-- Otherwise return the error (or errors) with the highest error position.
+parse1 :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
+          (tok -> Bool) -> PrinterParser e tok () (a :- ()) -> tok -> Either [e] a
+parse1 isComplete r paths =
+    let results = runParser (prs p) s (initialPos (Nothing :: Maybe e))
+    in partition isComplete 
 
 -- | Give all possible serializations.
 unparse :: tok -> PrinterParser e tok () url -> url -> [tok]

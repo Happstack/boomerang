@@ -255,7 +255,7 @@ anyText = val ps ss
 isComplete :: [Text] -> Bool
 isComplete []   = True
 isComplete [t]  = Text.null t
-
+isComplete _    = False
 
 -- | run the parser
 --
