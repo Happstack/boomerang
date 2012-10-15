@@ -1,4 +1,4 @@
--- | a 'PrinterParser' library for working with '[String]'
+-- | a 'Boomerang' library for working with '[String]'
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts, FlexibleInstances, TemplateHaskell, TypeFamilies, TypeSynonymInstances, TypeOperators #-}
 module Text.Boomerang.Strings
     (
@@ -7,7 +7,7 @@ module Text.Boomerang.Strings
     -- * Combinators
     , (</>), alpha, anyChar, anyString, char, digit, eos, int
     , integer, lit, readshow, satisfy, satisfyStr, space
-    -- * Running the 'PrinterParser'
+    -- * Running the 'Boomerang'
     , isComplete, parseStrings, unparseStrings
 
     )
@@ -24,19 +24,19 @@ import Text.Boomerang.Combinators (opt, rCons, rList1)
 import Text.Boomerang.Error       (ParserError(..),ErrorMsg(..), (<?>), condenseErrors, mkParserError)
 import Text.Boomerang.HStack       ((:-)(..))
 import Text.Boomerang.Pos         (InitialPosition(..), MajorMinorPos(..), incMajor, incMinor)
-import Text.Boomerang.Prim        (Parser(..), PrinterParser(..), parse1, xmaph, unparse1, val)
+import Text.Boomerang.Prim        (Parser(..), Boomerang(..), parse1, xmaph, unparse1, val)
 
 type StringsError = ParserError MajorMinorPos
 
 instance InitialPosition StringsError where
     initialPos _ = MajorMinorPos 0 0
 
-instance a ~ b => IsString (PrinterParser StringsError [String] a b) where
+instance a ~ b => IsString (Boomerang StringsError [String] a b) where
     fromString = lit
 
 -- | a constant string
-lit :: String -> PrinterParser StringsError [String] r r
-lit l = PrinterParser pf sf
+lit :: String -> Boomerang StringsError [String] r r
+lit l = Boomerang pf sf
     where
       pf = Parser $ \tok pos ->
            case tok of
@@ -52,12 +52,12 @@ lit l = PrinterParser pf sf
 
 infixr 9 </>
 -- | equivalent to @f . eos . g@
-(</>) :: PrinterParser StringsError [String] b c -> PrinterParser StringsError [String] a b -> PrinterParser StringsError [String] a c
+(</>) :: Boomerang StringsError [String] b c -> Boomerang StringsError [String] a b -> Boomerang StringsError [String] a c
 f </> g = f . eos . g
 
 -- | end of string
-eos :: PrinterParser StringsError [String] r r
-eos = PrinterParser
+eos :: Boomerang StringsError [String] r r
+eos = Boomerang
        (Parser $ \path pos -> case path of
                    []      -> [Right ((id, []), incMajor 1 pos)]
 --                   [] -> mkParserError pos [EOI "input"]
@@ -67,7 +67,7 @@ eos = PrinterParser
        (\a -> [(("" :), a)])
 
 -- | statisfy a 'Char' predicate
-satisfy :: (Char -> Bool) -> PrinterParser StringsError [String] r (Char :- r)
+satisfy :: (Char -> Bool) -> Boomerang StringsError [String] r (Char :- r)
 satisfy p = val
   (Parser $ \tok pos ->
        case tok of
@@ -85,7 +85,7 @@ satisfy p = val
 -- | satisfy a 'String' predicate.
 --
 -- Note: must match the entire remainder of the 'String' in this segment
-satisfyStr :: (String -> Bool) -> PrinterParser StringsError [String] r (String :- r)
+satisfyStr :: (String -> Bool) -> Boomerang StringsError [String] r (String :- r)
 satisfyStr p = val
   (Parser $ \tok pos ->
        case tok of
@@ -101,27 +101,27 @@ satisfyStr p = val
 
 
 -- | ascii digits @\'0\'..\'9\'@
-digit :: PrinterParser StringsError [String] r (Char :- r)
+digit :: Boomerang StringsError [String] r (Char :- r)
 digit = satisfy isDigit <?> "a digit 0-9"
 
 -- | matches alphabetic Unicode characters (lower-case, upper-case and title-case letters,
 -- plus letters of caseless scripts and modifiers letters).  (Uses 'isAlpha')
-alpha :: PrinterParser StringsError [String] r (Char :- r)
+alpha :: Boomerang StringsError [String] r (Char :- r)
 alpha = satisfy isAlpha <?> "an alphabetic Unicode character"
 
 -- | matches white-space characters in the Latin-1 range. (Uses 'isSpace')
-space :: PrinterParser StringsError [String] r (Char :- r)
+space :: Boomerang StringsError [String] r (Char :- r)
 space = satisfy isSpace <?> "a white-space character"
 
 -- | any character
-anyChar :: PrinterParser StringsError [String] r (Char :- r)
+anyChar :: Boomerang StringsError [String] r (Char :- r)
 anyChar = satisfy (const True)
 
 -- | matches the specified character
-char :: Char -> PrinterParser StringsError [String] r (Char :- r)
+char :: Char -> Boomerang StringsError [String] r (Char :- r)
 char c = satisfy (== c) <?> show [c]
 
--- | lift 'Read'/'Show' to a 'PrinterParser'
+-- | lift 'Read'/'Show' to a 'Boomerang'
 --
 -- There are a few restrictions here:
 --
@@ -131,7 +131,7 @@ char c = satisfy (== c) <?> show [c]
 --
 --  2. it is (currently) not safe to use 'readshow' on integral values
 --  because the 'Read' instance for 'Int', 'Integer', etc,
-readshow :: (Read a, Show a) => PrinterParser StringsError [String] r (a :- r)
+readshow :: (Read a, Show a) => Boomerang StringsError [String] r (a :- r)
 readshow =
     val readParser s
     where
@@ -159,13 +159,13 @@ readIntegral s =
 -- | matches an 'Int'
 --
 -- Note that the combinator @(rPair . int . int)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
-int :: PrinterParser StringsError [String] r (Int :- r)
+int :: Boomerang StringsError [String] r (Int :- r)
 int = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches an 'Integer'
 --
 -- Note that the combinator @(rPair . integer . integer)@ is ill-defined because the parse can not tell where it is supposed to split the sequence of digits to produced two ints.
-integer :: PrinterParser StringsError [String] r (Integer :- r)
+integer :: Boomerang StringsError [String] r (Integer :- r)
 integer = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 digit))
 
 -- | matches any 'String'
@@ -185,7 +185,7 @@ integer = xmaph readIntegral (Just . show) (opt (rCons . char '-') . (rList1 dig
 -- > parseStrings (rPair . anyString . anyString)  ["foobar"]
 --
 -- We will get @Right ("foobar","")@ instead of the original @Right ("foo","bar")@
-anyString :: PrinterParser StringsError [String] r (String :- r)
+anyString :: Boomerang StringsError [String] r (String :- r)
 anyString = val ps ss
     where
       ps = Parser $ \tok pos ->
@@ -212,7 +212,7 @@ isComplete _    = False
 -- Returns the first complete parse or a parse error.
 --
 -- > parseStrings (rUnit . lit "foo") ["foo"]
-parseStrings :: PrinterParser StringsError [String] () (r :- ())
+parseStrings :: Boomerang StringsError [String] () (r :- ())
              -> [String]
              -> Either StringsError r
 parseStrings pp strs =
@@ -221,5 +221,5 @@ parseStrings pp strs =
 -- | run the printer
 --
 -- > unparseStrings (rUnit . lit "foo") ()
-unparseStrings :: PrinterParser e [String] () (r :- ()) -> r -> Maybe [String]
+unparseStrings :: Boomerang e [String] () (r :- ()) -> r -> Maybe [String]
 unparseStrings pp r = unparse1 [] pp r

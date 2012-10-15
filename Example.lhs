@@ -40,13 +40,13 @@ Next we define a type that we want to be able to pretty-print and define parsers
 
 Then we generate some combinators for the type:
 
-> $(makePrinterParsers ''Foo)
+> $(makeBoomerangs ''Foo)
 
 The combinators will be named after the constructors, but with an r prefixed to them. In this case, @rBar@ and @rBaz@.
 
 Now we can define a grammar:
 
-> foo :: StringPrinterParser () (Foo :- ())
+> foo :: StringBoomerang () (Foo :- ())
 > foo = 
 >     (  rBar 
 >     <> rBaz . "baz-" . int . "-" . alpha

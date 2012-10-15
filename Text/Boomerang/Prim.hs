@@ -1,10 +1,10 @@
 {-# LANGUAGE FlexibleContexts, ScopedTypeVariables, TypeOperators, TypeFamilies #-}
 module Text.Boomerang.Prim
     ( -- * Types
-    Parser(..), PrinterParser(..), (.~)
+    Parser(..), Boomerang(..), PrinterParser, (.~)
     -- * Running routers
     , parse, parse1, unparse, unparse1, bestErrors
-    -- * Constructing / Manipulating PrinterParsers
+    -- * Constructing / Manipulating Boomerangs
     , xpure, val, xmap
     -- heterogeneous list functions
     , xmaph
@@ -88,70 +88,73 @@ bestErrors :: (ErrorPosition e, Ord (Pos e)) => [e] -> [e]
 bestErrors [] = []
 bestErrors errs = maximumsBy (compare `on` getPosition) errs
 
--- | A @PrinterParser a b@ takes an @a@ to parse a URL and results in @b@ if parsing succeeds.
+-- | A @Boomerang a b@ takes an @a@ to parse a URL and results in @b@ if parsing succeeds.
 --   And it takes a @b@ to serialize to a URL and results in @a@ if serializing succeeds.
-data PrinterParser e tok a b = PrinterParser
+data Boomerang e tok a b = Boomerang
   { prs :: Parser e tok (a -> b)
   , ser :: b -> [(tok -> tok, a)]
   }
 
-instance Category (PrinterParser e tok) where
-  id = PrinterParser
+type PrinterParser = Boomerang
+{-# DEPRECATED PrinterParser "Use Boomerang instead" #-}
+
+instance Category (Boomerang e tok) where
+  id = Boomerang
     (return id)
     (\x -> [(id, x)])
 
-  ~(PrinterParser pf sf) . ~(PrinterParser pg sg) = PrinterParser
+  ~(Boomerang pf sf) . ~(Boomerang pg sg) = Boomerang
     (composeP (.) pf pg)
     (compose (.) sf sg)
 
-instance Monoid (PrinterParser e tok a b) where
-  mempty = PrinterParser
+instance Monoid (Boomerang e tok a b) where
+  mempty = Boomerang
     mzero
     (const mzero)
 
-  ~(PrinterParser pf sf) `mappend` ~(PrinterParser pg sg) = PrinterParser
+  ~(Boomerang pf sf) `mappend` ~(Boomerang pg sg) = Boomerang
     (pf `mplus` pg)
     (\s -> sf s `mplus` sg s)
 
 infixr 9 .~
 -- | Reverse composition, but with the side effects still in left-to-right order.
-(.~) :: PrinterParser e tok a b -> PrinterParser e tok b c -> PrinterParser e tok a c
-~(PrinterParser pf sf) .~ ~(PrinterParser pg sg) = PrinterParser
+(.~) :: Boomerang e tok a b -> Boomerang e tok b c -> Boomerang e tok a c
+~(Boomerang pf sf) .~ ~(Boomerang pg sg) = Boomerang
   (composeP (flip (.)) pf pg)
   (compose (flip (.)) sg sf)
 
 -- | Map over routers.
-xmap :: (a -> b) -> (b -> Maybe a) -> PrinterParser e tok r a -> PrinterParser e tok r b
-xmap f g (PrinterParser p s) = PrinterParser p' s'
+xmap :: (a -> b) -> (b -> Maybe a) -> Boomerang e tok r a -> Boomerang e tok r b
+xmap f g (Boomerang p s) = Boomerang p' s'
     where
       p' = fmap (fmap f) p
       s' url = maybe mzero s (g url)
 
 -- | Lift a constructor-destructor pair to a pure router.
-xpure :: (a -> b) -> (b -> Maybe a) -> PrinterParser e tok a b
+xpure :: (a -> b) -> (b -> Maybe a) -> Boomerang e tok a b
 xpure f g = xmap f g id
 
 -- | Like "xmap", but only maps over the top of the stack.
-xmaph :: (a -> b) -> (b -> Maybe a) -> PrinterParser e tok i (a :- o) -> PrinterParser e tok i (b :- o)
+xmaph :: (a -> b) -> (b -> Maybe a) -> Boomerang e tok i (a :- o) -> Boomerang e tok i (b :- o)
 xmaph f g = xmap (hdMap f) (hdTraverse g)
 
--- | lift a 'Parser' and a printer into a 'PrinterParser'
-val :: forall e tok a r. Parser e tok a -> (a -> [tok -> tok]) -> PrinterParser e tok r (a :- r)
-val rs ss = PrinterParser rs' ss'
+-- | lift a 'Parser' and a printer into a 'Boomerang'
+val :: forall e tok a r. Parser e tok a -> (a -> [tok -> tok]) -> Boomerang e tok r (a :- r)
+val rs ss = Boomerang rs' ss'
     where
       rs' :: Parser e tok (r -> (a :- r))
       rs' = fmap (:-) rs
       ss' =  (\(a :- r) -> map (\f -> (f, r)) (ss a))
 
 -- | Give all possible parses or errors.
-parse :: forall e a p tok. (InitialPosition e) => PrinterParser e tok () a -> tok -> [Either e (a, tok)]
+parse :: forall e a p tok. (InitialPosition e) => Boomerang e tok () a -> tok -> [Either e (a, tok)]
 parse p s =
     map (either Left (\((f, tok), _) -> Right (f (), tok))) $ runParser (prs p) s (initialPos (Nothing :: Maybe e))
 
--- | Give the first parse, for PrinterParsers with a parser that yields just one value.
+-- | Give the first parse, for Boomerangs with a parser that yields just one value.
 -- Otherwise return the error (or errors) with the highest error position.
 parse1 :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
-          (tok -> Bool) -> PrinterParser e tok () (a :- ()) -> tok -> Either [e] a
+          (tok -> Bool) -> Boomerang e tok () (a :- ()) -> tok -> Either [e] a
 parse1 isComplete r paths =
     let results = parse r paths
     in case [ a | (Right (a,tok)) <- results, isComplete tok ] of
@@ -159,11 +162,11 @@ parse1 isComplete r paths =
          _             -> Left $ bestErrors [ e | Left e <- results ]
 
 -- | Give all possible serializations.
-unparse :: tok -> PrinterParser e tok () url -> url -> [tok]
+unparse :: tok -> Boomerang e tok () url -> url -> [tok]
 unparse tok p = (map (($ tok) . fst)) . ser p
 
--- | Give the first serialization, for PrinterParsers with a serializer that needs just one value.
-unparse1 :: tok -> PrinterParser e tok () (a :- ()) -> a -> Maybe tok
+-- | Give the first serialization, for Boomerangs with a serializer that needs just one value.
+unparse1 :: tok -> Boomerang e tok () (a :- ()) -> a -> Maybe tok
 unparse1 tok p a =
     case unparse tok p (a :- ()) of
       [] -> Nothing

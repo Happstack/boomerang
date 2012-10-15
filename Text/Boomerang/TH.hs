@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, TypeOperators #-}
 module Text.Boomerang.TH
-    ( makePrinterParsers
+    ( makeBoomerangs
     -- * Backwards-compatibility
     , derivePrinterParsers
     ) where
@@ -8,33 +8,33 @@ module Text.Boomerang.TH
 import Control.Monad       (liftM, replicateM)
 import Language.Haskell.TH
 import Text.Boomerang.HStack   ((:-)(..), arg)
-import Text.Boomerang.Prim    (xpure, PrinterParser)
+import Text.Boomerang.Prim    (xpure, Boomerang)
 
--- | Make a 'PrinterParser' router for each constructor in a datatype. For
+-- | Make a 'Boomerang' router for each constructor in a datatype. For
 -- example:
 --
---   @$(makePrinterParsers \'\'Sitemap)@
-makePrinterParsers :: Name -> Q [Dec]
-makePrinterParsers name = do
+--   @$(makeBoomerangs \'\'Sitemap)@
+makeBoomerangs :: Name -> Q [Dec]
+makeBoomerangs name = do
   info <- reify name
   case info of
     TyConI (DataD _ tName tBinds cons _)   ->
-      concat `liftM` mapM (derivePrinterParser (tName, tBinds)) cons
+      concat `liftM` mapM (deriveBoomerang (tName, tBinds)) cons
     TyConI (NewtypeD _ tName tBinds con _) ->
-      derivePrinterParser (tName, tBinds) con
+      deriveBoomerang (tName, tBinds) con
     _ ->
       fail $ show name ++ " is not a datatype."
 
--- | Old name for 'makePrinterParsers', since renamed to reflect the fact
+-- | Old name for 'makeBoomerangs', since renamed to reflect the fact
 -- that it's not actually deriving instances for any type class, but rather
--- generates top-level definitions for routers of type 'PrinterParser'.
+-- generates top-level definitions for routers of type 'Boomerang'.
 derivePrinterParsers :: Name -> Q [Dec]
-derivePrinterParsers = makePrinterParsers
-{-# DEPRECATED derivePrinterParsers "Use makePrinterParsers instead" #-}
+derivePrinterParsers = makeBoomerangs
+{-# DEPRECATED derivePrinterParsers "Use makeBoomerangs instead" #-}
 
 -- Derive a router for a single constructor.
-derivePrinterParser :: (Name, [TyVarBndr]) -> Con -> Q [Dec]
-derivePrinterParser (tName, tParams) con =
+deriveBoomerang :: (Name, [TyVarBndr]) -> Con -> Q [Dec]
+deriveBoomerang (tName, tParams) con =
   case con of
     NormalC name tys -> go name (map snd tys)
     RecC name tys -> go name (map (\(_,_,ty) -> ty) tys)
@@ -45,10 +45,10 @@ derivePrinterParser (tName, tParams) con =
     takeName (PlainTV n) = n
     takeName (KindedTV n _) = n
     go name tys = do
-      let name' = mkPrinterParserName name
+      let name' = mkBoomerangName name
       let tok' = mkName "tok"
       let e' = mkName "e"
-      let ppType = AppT (AppT (ConT ''PrinterParser) (VarT e')) (VarT tok')
+      let ppType = AppT (AppT (ConT ''Boomerang) (VarT e')) (VarT tok')
       let r' = mkName "r"
       let inT = foldr (\a b -> AppT (AppT (ConT ''(:-)) a) b) (VarT r') tys
       let outT = AppT (AppT (ConT ''(:-))
@@ -104,8 +104,8 @@ deriveDestructor name tys = do
 
 
 -- Derive the name of a router based on the name of the constructor in question.
-mkPrinterParserName :: Name -> Name
-mkPrinterParserName name = mkName ('r' : nameBase name)
+mkBoomerangName :: Name -> Name
+mkBoomerangName name = mkName ('r' : nameBase name)
 
 
 -- Retrieve the name of a constructor.

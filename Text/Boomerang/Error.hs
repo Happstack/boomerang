@@ -1,4 +1,4 @@
--- | An Error handling scheme that can be used with 'PrinterParser'
+-- | An Error handling scheme that can be used with 'Boomerang'
 {-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
 module Text.Boomerang.Error where
 
@@ -55,7 +55,7 @@ infix  0 <?>
 -- | annotate a parse error with an additional 'Expect' message
 --
 -- > satisfy isUpper <?> 'an uppercase character'
-(<?>) :: PrinterParser (ParserError p) tok a b -> String -> PrinterParser (ParserError p) tok a b
+(<?>) :: Boomerang (ParserError p) tok a b -> String -> Boomerang (ParserError p) tok a b
 router <?> msg =
     router { prs = Parser $ \tok pos ->
         map (either (\(ParserError mPos errs) -> Left $ ParserError mPos ((Expect msg) : errs)) Right) (runParser (prs router) tok pos) }
