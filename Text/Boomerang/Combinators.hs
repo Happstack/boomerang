@@ -17,7 +17,7 @@ import Control.Monad.Error (Error)
 import Data.Monoid         (Monoid(mappend))
 import Text.Boomerang.Prim    (Parser(..), PrinterParser(..), (.~), val, xpure)
 import Text.Boomerang.HStack   ((:-)(..), arg, hhead)
-import Text.Boomerang.TH      (derivePrinterParsers)
+import Text.Boomerang.TH      (makePrinterParsers)
 
 infixr 8 <>
 
@@ -120,19 +120,19 @@ rListSep r sep = chainr (rCons . duck1 r) sep . rNil
 rPair :: PrinterParser e tok (f :- s :- r) ((f, s) :- r)
 rPair = xpure (arg (arg (:-)) (,)) $ \(ab :- t) -> do (a,b) <- Just ab; Just (a :- b :- t)
 
-$(derivePrinterParsers ''Either)
+$(makePrinterParsers ''Either)
 
 -- | Combines a router for a value @a@ and a router for a value @b@ into a router for @Either a b@.
 rEither :: PrinterParser e tok r (a :- r) -> PrinterParser e tok r (b :- r) -> PrinterParser e tok r (Either a b :- r)
 rEither l r = rLeft . l <> rRight . r
 
-$(derivePrinterParsers ''Maybe)
+$(makePrinterParsers ''Maybe)
 
 -- | Converts a router for a value @a@ to a router for a @Maybe a@.
 rMaybe :: PrinterParser e tok r (a :- r) -> PrinterParser e tok r (Maybe a :- r)
 rMaybe r = rJust . r <> rNothing
 
-$(derivePrinterParsers ''Bool)
+$(makePrinterParsers ''Bool)
 
 rBool :: PrinterParser e tok a r -- ^ 'True' parser
       -> PrinterParser e tok a r -- ^ 'False' parser

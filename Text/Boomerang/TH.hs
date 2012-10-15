@@ -1,16 +1,21 @@
 {-# LANGUAGE TemplateHaskell, TypeOperators #-}
-module Text.Boomerang.TH (derivePrinterParsers) where
+module Text.Boomerang.TH
+    ( makePrinterParsers
+    -- * Backwards-compatibility
+    , derivePrinterParsers
+    ) where
 
 import Control.Monad       (liftM, replicateM)
 import Language.Haskell.TH
 import Text.Boomerang.HStack   ((:-)(..), arg)
 import Text.Boomerang.Prim    (xpure, PrinterParser)
 
--- | Derive routers for all constructors in a datatype. For example:
+-- | Make a 'PrinterParser' router for each constructor in a datatype. For
+-- example:
 --
---   @$(derivePrinterParsers \'\'Sitemap)@
-derivePrinterParsers :: Name -> Q [Dec]
-derivePrinterParsers name = do
+--   @$(makePrinterParsers \'\'Sitemap)@
+makePrinterParsers :: Name -> Q [Dec]
+makePrinterParsers name = do
   info <- reify name
   case info of
     TyConI (DataD _ tName tBinds cons _)   ->
@@ -19,6 +24,13 @@ derivePrinterParsers name = do
       derivePrinterParser (tName, tBinds) con
     _ ->
       fail $ show name ++ " is not a datatype."
+
+-- | Old name for 'makePrinterParsers', since renamed to reflect the fact
+-- that it's not actually deriving instances for any type class, but rather
+-- generates top-level definitions for routers of type 'PrinterParser'.
+derivePrinterParsers :: Name -> Q [Dec]
+derivePrinterParsers = makePrinterParsers
+{-# DEPRECATED derivePrinterParsers "Use makePrinterParsers instead" #-}
 
 -- Derive a router for a single constructor.
 derivePrinterParser :: (Name, [TyVarBndr]) -> Con -> Q [Dec]

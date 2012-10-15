@@ -42,9 +42,9 @@ Next we define a type that we want to be able to pretty-print and define parsers
 >     | Baz Int Char
 >       deriving (Eq, Show)
 
-Then we derive some combinators for the type:
+Then we generate some combinators for the type:
 
-> $(derivePrinterParsers ''Foo)
+> $(makePrinterParsers ''Foo)
 
 The combinators will be named after the constructors, but with an r prefixed to them. In this case, @rBar@ and @rBaz@.
 
