@@ -1,5 +1,5 @@
 -- | a collection of generic parsing combinators that can work with any token and error type.
-{-# LANGUAGE TemplateHaskell, TypeOperators #-}
+{-# LANGUAGE CPP, TemplateHaskell, TypeOperators #-}
 module Text.Boomerang.Combinators
     ( (<>), duck, duck1, opt
     , manyr, somer, chainr, chainr1, manyl, somel, chainl, chainl1
@@ -14,16 +14,21 @@ import Prelude             hiding ((.), id, (/))
 import Control.Category    (Category((.), id))
 import Control.Monad       (guard)
 import Control.Monad.Error (Error)
-import Data.Monoid         (Monoid(mappend))
 import Text.Boomerang.Prim    (Parser(..), Boomerang(..), (.~), val, xpure)
 import Text.Boomerang.HStack   ((:-)(..), arg, hhead)
 import Text.Boomerang.TH      (makeBoomerangs)
 
-infixr 8 <>
+#if MIN_VERSION_base(4,5,0)
+import Data.Monoid         (Monoid(mappend), (<>))
+#else
+import Data.Monoid         (Monoid(mappend))
+
+infixr 6 <>
 
 -- | Infix operator for 'mappend'.
 (<>) :: Monoid m => m -> m -> m
 (<>) = mappend
+#endif
 
 -- | Convert a router to do what it does on the tail of the stack.
 duck :: Boomerang e tok r1 r2 -> Boomerang e tok (h :- r1) (h :- r2)
