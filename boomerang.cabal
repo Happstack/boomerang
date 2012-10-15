@@ -41,5 +41,5 @@ Library
 
 source-repository head
     type:     darcs
-    location: http://patch-tag.com/r/stepcut/boomerang
+    location: http://hub.darcs.net/stepcut/boomerang
 
