@@ -188,9 +188,9 @@ rText1 :: Boomerang e [Text] r (Char :- r)
 rText1 r = somer (rTextCons . duck1 r) . rEmpty
 
 
--- | a sequence of digits
+-- | a sequence of one or more digits
 digits :: Boomerang TextsError [Text] r (Text :- r)
-digits = rText digit
+digits = rText1 digit
 
 -- | an optional - character
 --
