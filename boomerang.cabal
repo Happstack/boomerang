@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.4.2
+Version:          1.4.3
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -12,8 +12,8 @@ Cabal-Version:    >= 1.6
 Build-type:       Simple
 
 Library
-        Build-Depends:    base             >= 4 && < 5,
-                          mtl              >= 2.0 && <2.2,
+        Build-Depends:    base             >= 4    && < 5,
+                          mtl              >= 2.0  && < 2.3,
                           template-haskell,
                           text             >= 0.11 && < 1.2
         Exposed-Modules:  Text.Boomerang
