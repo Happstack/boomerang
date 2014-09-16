@@ -54,7 +54,7 @@ deriveBoomerang (tName, tParams) con =
       let outT = AppT (AppT (ConT ''(:-))
                             (foldl AppT (ConT tName) (map (VarT . takeName) tParams)))
                       (VarT r')
-      runIO $ putStrLn $ "Introducing router " ++ nameBase name' ++ "."
+      -- runIO $ putStrLn $ "Introducing router " ++ nameBase name' ++ "."
       expr <- [| xpure $(deriveConstructor name (length tys))
                      $(deriveDestructor name tys) |]
       return [ SigD name'

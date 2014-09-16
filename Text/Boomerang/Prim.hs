@@ -12,8 +12,9 @@ module Text.Boomerang.Prim
 
 import Prelude             hiding ((.), id)
 import Control.Arrow       (first)
+import Control.Applicative (Applicative(..), Alternative(..))
 import Control.Category    (Category((.), id))
-import Control.Monad       (MonadPlus(mzero, mplus))
+import Control.Monad       (MonadPlus(mzero, mplus), ap)
 import Control.Monad.Error (Error(..))
 import Data.Either         (partitionEithers)
 import Data.Function       (on)
@@ -54,6 +55,10 @@ instance Functor (Parser e tok) where
         Parser $ \tok pos ->
             map (fmap (first (first f))) (p tok pos)
 
+instance Applicative (Parser e tok) where
+    pure  = return
+    (<*>) = ap
+
 instance Monad (Parser e tok) where
     return a =
         Parser $ \tok pos ->
@@ -64,6 +69,10 @@ instance Monad (Parser e tok) where
               ([], []) -> []
               (errs,[]) -> map Left errs
               (_,as) -> concat [ runParser (f a) tok' pos' | ((a, tok'), pos') <- as ]
+
+instance Alternative (Parser e tok) where
+    empty = mzero
+    (<|>) = mplus
 
 instance MonadPlus (Parser e tok) where
     mzero = Parser $ \tok pos -> []
