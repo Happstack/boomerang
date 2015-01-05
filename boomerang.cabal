@@ -40,6 +40,5 @@ Library
                           TypeSynonymInstances
 
 source-repository head
-    type:     darcs
-    location: http://hub.darcs.net/stepcut/boomerang
-
+    type:     git
+    location: https://github.com/Happstack/boomerang.git
