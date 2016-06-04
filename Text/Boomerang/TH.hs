@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators #-}
+{-# LANGUAGE CPP, TemplateHaskell, TypeOperators #-}
 module Text.Boomerang.TH
     ( makeBoomerangs
     -- * Backwards-compatibility
@@ -18,7 +18,11 @@ makeBoomerangs :: Name -> Q [Dec]
 makeBoomerangs name = do
   info <- reify name
   case info of
+#if MIN_VERSION_template_haskell(2,11,0)
+    TyConI (DataD _ tName tBinds _ cons _)   ->
+#else
     TyConI (DataD _ tName tBinds cons _)   ->
+#endif
       concat `liftM` mapM (deriveBoomerang (tName, tBinds)) cons
     TyConI (NewtypeD _ tName tBinds con _) ->
       deriveBoomerang (tName, tBinds) con
