@@ -24,7 +24,11 @@ makeBoomerangs name = do
     TyConI (DataD _ tName tBinds cons _)   ->
 #endif
       concat `liftM` mapM (deriveBoomerang (tName, tBinds)) cons
+#if MIN_VERSION_template_haskell(2,11,0)
+    TyConI (NewtypeD _ tName tBinds _ con _) ->
+#else
     TyConI (NewtypeD _ tName tBinds con _) ->
+#endif
       deriveBoomerang (tName, tBinds) con
     _ ->
       fail $ show name ++ " is not a datatype."
