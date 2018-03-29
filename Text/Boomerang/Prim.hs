@@ -19,6 +19,7 @@ import Control.Monad.Error (Error(..))
 import Data.Either         (partitionEithers)
 import Data.Function       (on)
 import Data.Monoid         (Monoid(mappend, mempty))
+import qualified Data.Semigroup as SG
 import Text.Boomerang.HStack   ((:-)(..), hdMap, hdTraverse)
 import Text.Boomerang.Pos     (ErrorPosition(..), InitialPosition(..), Pos)
 
@@ -116,14 +117,16 @@ instance Category (Boomerang e tok) where
     (composeP (.) pf pg)
     (compose (.) sf sg)
 
+instance SG.Semigroup (Boomerang e tok a b) where
+  ~(Boomerang pf sf) <> ~(Boomerang pg sg) = Boomerang
+    (pf `mplus` pg)
+    (\s -> sf s `mplus` sg s)
+
 instance Monoid (Boomerang e tok a b) where
   mempty = Boomerang
     mzero
     (const mzero)
-
-  ~(Boomerang pf sf) `mappend` ~(Boomerang pg sg) = Boomerang
-    (pf `mplus` pg)
-    (\s -> sf s `mplus` sg s)
+  mappend = (SG.<>)
 
 infixr 9 .~
 -- | Reverse composition, but with the side effects still in left-to-right order.
