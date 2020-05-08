@@ -13,7 +13,6 @@ import Control.Arrow       (first, second)
 import Prelude             hiding ((.), id, (/))
 import Control.Category    (Category((.), id))
 import Control.Monad       (guard)
-import Control.Monad.Error (Error)
 import Text.Boomerang.Prim    (Parser(..), Boomerang(..), (.~), val, xpure)
 import Text.Boomerang.HStack   ((:-)(..), arg, hhead)
 import Text.Boomerang.TH      (makeBoomerangs)
@@ -101,7 +100,7 @@ printAs :: Boomerang e [tok] a b -> tok -> Boomerang e [tok] a b
 printAs r s = r { ser = map (first (const (s :))) . take 1 . ser r }
 
 -- | Push a value on the stack (during parsing, pop it from the stack when serializing).
-push :: (Eq a, Error e) => a -> Boomerang e tok r (a :- r)
+push :: Eq a => a -> Boomerang e tok r (a :- r)
 push a = xpure (a :-) (\(a' :- t) -> guard (a' == a) >> Just t)
 
 rNil :: Boomerang e tok r ([a] :- r)
