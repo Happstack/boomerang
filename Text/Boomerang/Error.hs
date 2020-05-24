@@ -33,6 +33,7 @@ type instance Pos (ParserError p) = p
 
 instance ErrorPosition (ParserError p) where
     getPosition (ParserError mPos _) = mPos
+    setPosition mPos (ParserError _ msg) = ParserError (Just mPos) msg
 
 {-
 instance ErrorList ParserError where
