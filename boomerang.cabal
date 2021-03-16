@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.4.6
+Version:          1.4.7
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -10,7 +10,7 @@ Synopsis:         Library for invertible parsing and printing
 Description:      Specify a single unified grammar which can be used for parsing and pretty-printing
 Cabal-Version:    >= 1.10
 Build-type:       Simple
-tested-with:      GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.3, GHC == 8.10.1
+tested-with:      GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.3, GHC == 8.10.1, GHC == 9.0.1
 
 Library
         Default-Language: Haskell2010

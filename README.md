@@ -1,4 +1,4 @@
-boomerang [![Hackage](https://img.shields.io/hackage/v/boomerang.svg)](https://hackage.haskell.org/package/boomerang) [![Build Status](https://api.travis-ci.org/Happstack/boomerang.svg?branch=master)](https://travis-ci.org/Happstack/boomerang)
+boomerang [![Hackage](https://img.shields.io/hackage/v/boomerang.svg)](https://hackage.haskell.org/package/boomerang) [![Build Status](https://api.travis-ci.org/Happstack/boomerang.svg?branch=master)](https://travis-ci.com/Happstack/boomerang)
 =========
 
 boomerang is a library which provides invertible parsing and printing.
