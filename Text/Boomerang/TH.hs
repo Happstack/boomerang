@@ -7,6 +7,7 @@ module Text.Boomerang.TH
 
 import Control.Monad       (liftM, replicateM)
 import Language.Haskell.TH
+import Language.Haskell.TH.Datatype.TyVarBndr
 import Text.Boomerang.HStack   ((:-)(..), arg)
 import Text.Boomerang.Prim    (xpure, Boomerang)
 
@@ -41,7 +42,7 @@ derivePrinterParsers = makeBoomerangs
 {-# DEPRECATED derivePrinterParsers "Use makeBoomerangs instead" #-}
 
 -- Derive a router for a single constructor.
-deriveBoomerang :: (Name, [TyVarBndr]) -> Con -> Q [Dec]
+deriveBoomerang :: (Name, [TyVarBndrUnit]) -> Con -> Q [Dec]
 deriveBoomerang (tName, tParams) con =
   case con of
     NormalC name tys -> go name (map snd tys)
@@ -50,8 +51,6 @@ deriveBoomerang (tName, tParams) con =
       runIO $ putStrLn $ "Skipping unsupported constructor " ++ show (conName con)
       return []
   where
-    takeName (PlainTV n) = n
-    takeName (KindedTV n _) = n
     go name tys = do
       let name' = mkBoomerangName name
       let tok' = mkName "tok"
@@ -60,13 +59,13 @@ deriveBoomerang (tName, tParams) con =
       let r' = mkName "r"
       let inT = foldr (\a b -> AppT (AppT (ConT ''(:-)) a) b) (VarT r') tys
       let outT = AppT (AppT (ConT ''(:-))
-                            (foldl AppT (ConT tName) (map (VarT . takeName) tParams)))
+                            (foldl AppT (ConT tName) (map (VarT . tvName) tParams)))
                       (VarT r')
       -- runIO $ putStrLn $ "Introducing router " ++ nameBase name' ++ "."
       expr <- [| xpure $(deriveConstructor name (length tys))
                      $(deriveDestructor name tys) |]
       return [ SigD name'
-                    (ForallT (map PlainTV ([tok', e', r'] ++ (map takeName tParams)))
+                    (ForallT (map plainTVSpecified ([tok', e', r'] ++ (map tvName tParams)))
                              []
                              (AppT (AppT ppType inT) outT))
              , FunD name' [Clause [] (NormalB expr) []]
