@@ -97,13 +97,13 @@ deriveDestructor name tys = do
   ConE cons  <- [| (:-) |]
 
 
-  let conPat   = ConP name (map VarP fieldNames)
+  let conPat   = conPCompat name (map VarP fieldNames)
   let okBody   = ConE just `AppE`
                   foldr
                     (\h t -> ConE cons `AppE` VarE h `AppE` t)
                     (VarE r)
                     fieldNames
-  let okCase   = Match (ConP cons [conPat, VarP r]) (NormalB okBody) []
+  let okCase   = Match (conPCompat cons [conPat, VarP r]) (NormalB okBody) []
   let nStr = show name
   let failCase = Match WildP (NormalB nothing) []
 
@@ -123,3 +123,10 @@ conName con =
     RecC name _     -> name
     InfixC _ name _ -> name
     ForallC _ _ con' -> conName con'
+
+conPCompat :: Name -> [Pat] -> Pat
+conPCompat n pats = ConP n
+#if MIN_VERSION_template_haskell(2,18,0)
+                           []
+#endif
+                           pats
