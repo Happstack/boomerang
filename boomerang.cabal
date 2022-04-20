@@ -10,7 +10,7 @@ Synopsis:         Library for invertible parsing and printing
 Description:      Specify a single unified grammar which can be used for parsing and pretty-printing
 Cabal-Version:    >= 1.10
 Build-type:       Simple
-tested-with:      GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.3, GHC == 8.10.1, GHC == 9.0.1, GHC == 9.2.1
+tested-with:      GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.4, GHC == 8.10.7, GHC == 9.0.2, GHC == 9.2.2
 
 Library
         Default-Language: Haskell2010
