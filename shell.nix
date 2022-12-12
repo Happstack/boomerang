@@ -4,12 +4,12 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, mtl, stdenv, template-haskell, semigroups, text, cabal-install }:
+  f = { mkDerivation, base, mtl, stdenv, template-haskell, semigroups, text, th-abstraction, cabal-install }:
       mkDerivation {
         pname = "boomerang";
         version = "1.4.5";
         src = ./.;
-        libraryHaskellDepends = [ base mtl template-haskell semigroups text cabal-install ];
+        libraryHaskellDepends = [ base mtl template-haskell semigroups text th-abstraction cabal-install ];
         description = "Library for invertible parsing and printing";
         license = stdenv.lib.licenses.bsd3;
       };
