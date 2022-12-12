@@ -4,7 +4,7 @@ License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
 Maintainer:       partners@seereason.com
-Bug-Reports:      http://code.google.com/p/happstack/issues/list
+Bug-Reports:      https://github.com/Happstack/boomerang/issues
 Category:         Parsing, Text
 Synopsis:         Library for invertible parsing and printing
 Description:      Specify a single unified grammar which can be used for parsing and pretty-printing
