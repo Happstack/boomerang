@@ -1,8 +1,10 @@
 -- | An Error handling scheme that can be used with 'Boomerang'
-{-# LANGUAGE DeriveDataTypeable, TypeFamilies #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, TypeFamilies #-}
 module Text.Boomerang.Error where
 
+#if !MIN_VERSION_mtl(2,3,0)
 import Control.Monad.Error (Error(..))
+#endif
 import Data.Data (Data, Typeable)
 import Data.List (intercalate, sort, nub)
 import Text.Boomerang.Prim
@@ -39,8 +41,10 @@ instance ErrorList ParserError where
     listMsg s = [ParserError Nothing (Other s)]
 -}
 
+#if !MIN_VERSION_mtl(2,3,0)
 instance Error (ParserError p) where
     strMsg s = ParserError Nothing [Message s]
+#endif
 
 -- | lift a 'pos' and '[ErrorMsg]' into a parse error
 --
