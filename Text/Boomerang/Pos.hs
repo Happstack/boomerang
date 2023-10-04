@@ -16,6 +16,7 @@ type family Pos err :: *
 -- | extract the position information from an error
 class ErrorPosition err where
     getPosition :: err -> Maybe (Pos err)
+    setPosition :: Pos err -> err -> err
 
 -- | the initial position for a position type
 class InitialPosition e where
