@@ -42,7 +42,11 @@ derivePrinterParsers = makeBoomerangs
 {-# DEPRECATED derivePrinterParsers "Use makeBoomerangs instead" #-}
 
 -- Derive a router for a single constructor.
+#if MIN_VERSION_template_haskell(2,21,0)
+deriveBoomerang :: (Name, [TyVarBndrVis]) -> Con -> Q [Dec]
+#else
 deriveBoomerang :: (Name, [TyVarBndrUnit]) -> Con -> Q [Dec]
+#endif
 deriveBoomerang (tName, tParams) con =
   case con of
     NormalC name tys -> go name (map snd tys)
