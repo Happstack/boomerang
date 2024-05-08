@@ -17,7 +17,7 @@ Library
         Build-Depends:    base             >= 4    && < 5,
                           mtl              >= 2.0  && < 2.4,
                           semigroups       >= 0.16 && < 0.21,
-                          template-haskell            < 2.21,
+                          template-haskell            < 2.22,
                           text             >= 0.11 && < 2.2,
                           th-abstraction   >= 0.4  && < 0.7
         Exposed-Modules:  Text.Boomerang
