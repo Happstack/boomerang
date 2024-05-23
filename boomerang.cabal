@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.4.9.2
+Version:          1.4.9.3
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -19,7 +19,7 @@ Library
                           semigroups       >= 0.16 && < 0.21,
                           template-haskell            < 2.22,
                           text             >= 0.11 && < 2.2,
-                          th-abstraction   >= 0.4  && < 0.7
+                          th-abstraction   >= 0.4  && < 0.8
         Exposed-Modules:  Text.Boomerang
                           Text.Boomerang.Combinators
                           Text.Boomerang.Error
