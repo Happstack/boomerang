@@ -17,6 +17,7 @@ import Control.Category    (Category((.), id))
 import Control.Monad       (MonadPlus(mzero, mplus), ap)
 import Data.Either         (partitionEithers)
 import Data.Function       (on)
+import Data.List           (partition)
 import Data.Monoid         (Monoid(mappend, mempty))
 import qualified Data.Semigroup as SG
 import Text.Boomerang.HStack   ((:-)(..), hdMap, hdTraverse)
@@ -158,19 +159,34 @@ val rs ss = Boomerang rs' ss'
       ss' =  (\(a :- r) -> map (\f -> (f, r)) (ss a))
 
 -- | Give all possible parses or errors.
-parse :: forall e a p tok. (InitialPosition e) => Boomerang e tok () a -> tok -> [Either e (a, tok)]
+parse :: forall e a p tok. (InitialPosition e) => Boomerang e tok () a -> tok -> [Either e (a, tok, Pos e)]
 parse p s =
-    map (either Left (\((f, tok), _) -> Right (f (), tok))) $ runParser (prs p) s (initialPos (Nothing :: Maybe e))
+    map (either Left (\((f, tok), pos) -> Right (f (), tok, pos))) $ runParser (prs p) s (initialPos (Nothing :: Maybe e))
 
 -- | Give the first parse, for Boomerangs with a parser that yields just one value.
 -- Otherwise return the error (or errors) with the highest error position.
-parse1 :: (ErrorPosition e, InitialPosition e, Show e, Ord (Pos e)) =>
-          (tok -> Bool) -> Boomerang e tok () (a :- ()) -> tok -> Either [e] a
-parse1 isComplete r paths =
-    let results = parse r paths
-    in case [ a | (Right (a,tok)) <- results, isComplete tok ] of
-         ((u :- ()):_) -> Right u
-         _             -> Left $ bestErrors [ e | Left e <- results ]
+parse1 :: (Error e, ErrorPosition e, InitialPosition e, Show e, Ord (Pos e), Show tok ) => (tok -> Bool) -> Boomerang e tok () (a :- ()) -> tok -> Either [e] a
+parse1 isComplete p s = 
+  case partition (either (const False) (\(_,tok,_) -> isComplete tok )) $
+       parse p s of
+    ( [],             badParsings )  -> bestMsgs Nothing [] badParsings 
+    ( Right ( u :- (), _, _ ):_, _) ->  Right u
+   where 
+    bestMsgs _      errMsgs []     = Left errMsgs
+    bestMsgs errPos errMsgs (x:xs) = case x of 
+      Right ( u :- ()  ,tok, pos) 
+        | justPos > errPos -> bestMsgs justPos (newErrMsg :[]) xs  
+        | otherwise        -> bestMsgs errPos   errMsgs        xs 
+          where 
+            justPos   = Just pos
+            newErrMsg = setPosition pos  $ strMsg $ 
+                        "no parse starting at " ++ (take 10 $ show tok) 
+      Left e  -> let mPos = getPosition e in   
+          case compare mPos errPos of 
+            GT -> bestMsgs mPos   [e]         xs
+            EQ -> bestMsgs mPos   (e:errMsgs) xs 
+            LT -> bestMsgs errPos    errMsgs  xs 
+
 
 -- | Give all possible serializations.
 unparse :: tok -> Boomerang e tok () url -> url -> [tok]
