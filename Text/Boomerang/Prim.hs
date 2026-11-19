@@ -44,6 +44,9 @@ maximumsBy cmp (x:xs)    =  foldl maxBy [x] xs
             GT -> xs
             EQ -> (y:xs)
             LT  -> [y]
+      -- not reached: the fold starts with [x], and each case above is
+      -- not empty
+      maxBy [] y = [y]
 
 -- |Yet another parser.
 --

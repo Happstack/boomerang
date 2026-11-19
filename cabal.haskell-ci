@@ -1,0 +1,4 @@
+-- haskell-ci's settings (haskell-ci regenerate reads this file)
+
+-- the GHC 8.x jobs need libtinfo5, which jammy's image has
+distribution: jammy

@@ -1,5 +1,5 @@
 Name:             boomerang
-Version:          1.4.9.4
+Version:          1.4.9.5
 License:          BSD3
 License-File:     LICENSE
 Author:           jeremy@seereason.com
@@ -10,16 +10,21 @@ Synopsis:         Library for invertible parsing and printing
 Description:      Specify a single unified grammar which can be used for parsing and pretty-printing
 Cabal-Version:    >= 1.10
 Build-type:       Simple
-tested-with:      GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.4, GHC == 8.10.7, GHC == 9.0.2, GHC==9.2.5, GHC==9.4.8, GHC==9.6.4, GHC==9.8.2, GHC==9.10.1
+tested-with:      GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1, GHC == 8.6.5, GHC == 8.8.4, GHC == 8.10.7, GHC == 9.0.2, GHC==9.2.5, GHC==9.4.8, GHC==9.6.4, GHC==9.8.2, GHC==9.10.1, GHC==9.14.1
 
 Library
         Default-Language: Haskell2010
         Build-Depends:    base             >= 4    && < 5,
-                          mtl              >= 2.0  && < 2.4,
-                          semigroups       >= 0.16 && < 0.21,
-                          template-haskell            < 2.23,
+                          template-haskell            < 2.25,
                           text             >= 0.11 && < 2.2,
                           th-abstraction   >= 0.4  && < 0.8
+        -- Data.Semigroup is in base from 4.9 (GHC 8.0)
+        if !impl(ghc >= 8.0)
+          Build-Depends:  semigroups       >= 0.16 && < 0.21
+        -- only for Control.Monad.Error's Error class, which mtl 2.3
+        -- (GHC 9.6's) no longer has
+        if !impl(ghc >= 9.6)
+          Build-Depends:  mtl              >= 2.0  && < 2.4
         Exposed-Modules:  Text.Boomerang
                           Text.Boomerang.Combinators
                           Text.Boomerang.Error

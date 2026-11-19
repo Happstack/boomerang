@@ -2,8 +2,12 @@
 {-# LANGUAGE CPP, DeriveDataTypeable, TypeFamilies #-}
 module Text.Boomerang.Error where
 
+-- mtl is a dependency only with GHC < 9.6 (boomerang.cabal), and
+-- MIN_VERSION_mtl is defined only when it is
+#if defined(MIN_VERSION_mtl)
 #if !MIN_VERSION_mtl(2,3,0)
 import Control.Monad.Error (Error(..))
+#endif
 #endif
 import Data.Data (Data, Typeable)
 import Data.List (intercalate, sort, nub)
@@ -41,9 +45,11 @@ instance ErrorList ParserError where
     listMsg s = [ParserError Nothing (Other s)]
 -}
 
+#if defined(MIN_VERSION_mtl)
 #if !MIN_VERSION_mtl(2,3,0)
 instance Error (ParserError p) where
     strMsg s = ParserError Nothing [Message s]
+#endif
 #endif
 
 -- | lift a 'pos' and '[ErrorMsg]' into a parse error

@@ -6,6 +6,7 @@ module Text.Boomerang.TH
     ) where
 
 import Control.Monad       (liftM, replicateM)
+import Data.List           (intercalate)
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype.TyVarBndr
 import Text.Boomerang.HStack   ((:-)(..), arg)
@@ -52,7 +53,7 @@ deriveBoomerang (tName, tParams) con =
     NormalC name tys -> go name (map snd tys)
     RecC name tys -> go name (map (\(_,_,ty) -> ty) tys)
     _ -> do
-      runIO $ putStrLn $ "Skipping unsupported constructor " ++ show (conName con)
+      runIO $ putStrLn $ "Skipping unsupported constructor " ++ intercalate ", " (map show (conNames con))
       return []
   where
     go name tys = do
@@ -119,14 +120,19 @@ mkBoomerangName :: Name -> Name
 mkBoomerangName name = mkName ('r' : nameBase name)
 
 
--- Retrieve the name of a constructor.
-conName :: Con -> Name
-conName con =
+-- Retrieve the names of a constructor (a GADT-syntax one may declare
+-- several at once).
+conNames :: Con -> [Name]
+conNames con =
   case con of
-    NormalC name _  -> name
-    RecC name _     -> name
-    InfixC _ name _ -> name
-    ForallC _ _ con' -> conName con'
+    NormalC name _  -> [name]
+    RecC name _     -> [name]
+    InfixC _ name _ -> [name]
+    ForallC _ _ con' -> conNames con'
+#if MIN_VERSION_template_haskell(2,11,0)
+    GadtC names _ _    -> names
+    RecGadtC names _ _ -> names
+#endif
 
 conPCompat :: Name -> [Pat] -> Pat
 conPCompat n pats = ConP n

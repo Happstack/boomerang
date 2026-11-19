@@ -146,8 +146,9 @@ readParser =
           (p:ps) ->
             case reads p of
               [] -> mkParserError pos [SysUnExpect p, Message $ "decoding using 'read' failed."]
-              [(a,r)] ->
-                  [Right ((a, r:ps), incMinor ((length p) - (length r)) pos)]
+              -- each parse 'reads' gives (one, unless the Read instance
+              -- is ambiguous) is a possible parse
+              parses -> [ Right ((a, r:ps), incMinor ((length p) - (length r)) pos) | (a, r) <- parses ]
 
 readIntegral :: (Read a, Eq a, Num a, Real a) => String -> a
 readIntegral s =
